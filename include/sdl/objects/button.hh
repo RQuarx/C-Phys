@@ -6,13 +6,6 @@ namespace sdl
 {
     class button : public box
     {
-        enum state
-        {
-            HOVERED,
-            RELEASED,
-            CLICKED
-        };
-
     public:
         button( const f_pair &p_pos,
                 const f_pair &p_size,
@@ -27,18 +20,14 @@ namespace sdl
         void get_events( events_container &p_events ) override;
 
     protected:
-        state m_state;
-        bool m_change_color;
-
         color m_hover_color;
         color m_clicked_color;
         color m_original_color;
 
     private:
+
         /* Checks whether p_current_pos is within the rect's body. */
         auto is_in_bound( const f_pair &p_current_pos ) -> bool;
-
-        auto on_cursor_motion( event_data &p_data,
-                               state &p_state ) -> app_retval;
+        auto cursor_event( event_data &p_data ) -> app_retval;
     };
 } /* namespace sdl */

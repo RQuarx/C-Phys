@@ -24,5 +24,5 @@ constexpr void log( const std::string &p_label,
                                     std::make_format_args(p_args...));
     std::string func = p_func.substr(p_func.find_first_of(' ') + 1);
 
-    std::println("{:<13}\033[0;0m on {}: {}", p_label, func, msg);
+    std::println("{:<13}\033[0;0m on {:<40}: {}", p_label, func, msg);
 }

@@ -10,7 +10,7 @@ button::button( const f_pair &p_pos,
                 const color  &p_color,
                 const color  &p_on_hover,
                 const color  &p_on_clicked ) :
-    m_change_color(false),
+    // m_change_color(false),
     m_hover_color(p_on_hover),
     m_clicked_color(p_on_clicked),
     m_original_color(p_color)
@@ -30,20 +30,6 @@ button::~button( void )
 void
 button::draw( SDL_Renderer *p_render )
 {
-    LOG_DBG("Change color: {}", m_change_color);
-
-    if (m_change_color) {
-        switch (m_state) {
-        case HOVERED:  m_color = m_hover_color;
-        case CLICKED:  m_color = m_clicked_color;
-        case RELEASED: m_color = m_original_color;
-        }
-
-        m_change_color = false;
-    }
-
-    LOG_DBG("Color: {}", m_color == m_original_color ? "Ori" : "Nah");
-
     SDL_SetRenderDrawColor(p_render, m_color.r, m_color.g,
                                      m_color.b, m_color.a);
     if (!SDL_RenderFillRect(p_render, &m_box))
@@ -71,26 +57,42 @@ button::is_in_bound( const f_pair &p_current_pos ) -> bool
 
 
 auto
-button::on_cursor_motion( event_data &p_data,
-                          state      &p_state ) -> app_retval
+button::cursor_event( event_data &p_data ) -> app_retval
 {
     const f_pair current_pos = { p_data.event->motion.x,
                                  p_data.event->motion.y };
-
-    if (is_in_bound(current_pos)) {
-        m_change_color = true;
-        p_state = HOVERED;
-
+    if (!is_in_bound(current_pos)) {
+        if (m_color != m_original_color)
+            m_color = m_original_color;
         return RETURN_CONTINUE;
     }
 
-    /* Now we check if it is going from hover to normal. */
-    if (m_hover_color == m_color) {
-        m_change_color = true;
-        p_state = RELEASED;
+    const bool is_button_down = p_data.event->button.down;
+    const bool is_lmb         = p_data.event->button.button == 1;
 
-        return RETURN_CONTINUE;
-    }
+    if (is_lmb && is_button_down) {
+        m_color = m_clicked_color;
+    } else m_color = m_hover_color;
 
     return RETURN_CONTINUE;
+}
+
+
+void
+button::get_events( events_container &p_events )
+{
+    p_events[SDL_EVENT_MOUSE_MOTION].emplace_back(
+    [this]( event_data &p_data ) -> app_retval {
+        return cursor_event(p_data);
+    });
+
+    p_events[SDL_EVENT_MOUSE_BUTTON_DOWN].emplace_back(
+    [this]( event_data &p_data ) -> app_retval {
+        return cursor_event(p_data);
+    });
+
+    p_events[SDL_EVENT_MOUSE_BUTTON_UP].emplace_back(
+    [this]( event_data &p_data ) -> app_retval {
+        return cursor_event(p_data);
+    });
 }
