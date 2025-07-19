@@ -1,15 +1,35 @@
 #pragma once
 #include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_rect.h>
 #include "sdl/obj.hh"
 
 
-class sdl_box : public sdl_obj
+namespace sdl
 {
-public:
-    sdl_box( const f_pair     &p_pos,
-             const f_pair     &p_size,
-             const SDL_FColor &p_color,
-             bool              p_fill );
+    class box : public object
+    {
+    public:
+        box( void ) = default;
 
-private:
-};
+        box( const f_pair &p_pos,
+             const f_pair &p_size,
+             const color  &p_color,
+             bool          p_fill );
+
+
+        ~box( void );
+
+
+        void draw( SDL_Renderer *p_render ) override;
+
+
+        [[nodiscard]]
+        auto get_rect( void ) -> const SDL_FRect &;
+
+    protected:
+        SDL_FRect m_box;
+
+    private:
+        bool m_fill;
+    };
+} /* namespace sdl */

@@ -20,5 +20,5 @@ private:
 };
 
 
-class sdl_error : app_error
+class sdl_error : public app_error
 { public: using app_error::app_error; };

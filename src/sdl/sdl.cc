@@ -4,14 +4,17 @@
 #include "sdl/sdl.hh"
 #include "logs.hh"
 
+using sdl::object;
+using sdl::main;
 
-sdl::sdl( const std::string &p_window_title )
+
+main::main( const std::string &p_window_title )
 {
     init(p_window_title);
 }
 
 
-sdl::~sdl( void )
+main::~main( void )
 {
     LOG_DBG("Destroying application");
     if (m_render != nullptr) SDL_DestroyRenderer(m_render);
@@ -21,20 +24,21 @@ sdl::~sdl( void )
 
 
 auto
-sdl::get_error( void ) const -> std::string
+main::get_error( void ) const -> std::string
 { return SDL_GetError(); }
 
 
 void
-sdl::add_obj( const std::shared_ptr<sdl_obj> &p_obj )
+main::add_obj( object *p_obj )
 {
     LOG_DBG("Adding object to parent window.");
     m_objects.push_back(p_obj);
+    p_obj->get_events(m_event_funcs);
 }
 
 
 void
-sdl::add_event( const uint32_t p_type, event_func p_func )
+main::add_event( const uint32_t p_type, event_func p_func )
 {
     LOG_DBG("Adding an event of type {} to the queue.", p_type);
     m_event_funcs[p_type].push_back(p_func);
@@ -42,7 +46,7 @@ sdl::add_event( const uint32_t p_type, event_func p_func )
 
 
 void
-sdl::init( const std::string &p_window_title )
+main::init( const std::string &p_window_title )
 {
     LOG_INF("Initializing application");
 
@@ -58,7 +62,7 @@ sdl::init( const std::string &p_window_title )
         throw sdl_error("Failed to create window and renderer: {}",
                          get_error());
 
-    if (!SDL_SetRenderVSync(m_render, SDL_RENDERER_VSYNC_ADAPTIVE))
+    if (!SDL_SetRenderVSync(m_render, 1))
         throw sdl_error("Failed to set render vsync type to adaptive: {}",
                          get_error());
 
@@ -66,10 +70,11 @@ sdl::init( const std::string &p_window_title )
 }
 
 
-void
-sdl::run( void )
+auto
+main::run( void ) -> int32_t
 {
-    bool running = true;
+    bool running   = true;
+    app_retval val = RETURN_CONTINUE;
 
     while (running) {
         SDL_Event event;
@@ -77,35 +82,60 @@ sdl::run( void )
 
             auto retval = event_loop(event);
 
-            if (retval == SDL_APP_FAILURE)
-                exit(1);
+            if (retval == RETURN_FAILURE) {
+                val = RETURN_FAILURE;
+                break;
+            }
 
-            if (retval == SDL_APP_SUCCESS)
-                running = false;
+            if (retval == RETURN_SUCCESS) {
+                val = RETURN_SUCCESS;
+                break;
+            }
+
+            if (retval == RETURN_SKIP) {
+                val = RETURN_SKIP;
+                break;
+            }
+
+            val = RETURN_CONTINUE;
         }
+
+        if (val == RETURN_SKIP) continue;
+        if (val == RETURN_FAILURE || val == RETURN_SUCCESS)
+            break;
 
         SDL_SetRenderDrawColorFloat(m_render, 0, 0, 0, 1);
         SDL_RenderClear(m_render);
 
-        for (const auto &objs : m_objects)
-            objs->draw(m_render);
+        for (auto *obj : m_objects)
+            obj->draw(m_render);
 
         SDL_RenderPresent(m_render);
     }
+
+    if (val == RETURN_FAILURE) {
+        return 1;
+    } else { return 0; }
 }
 
 
 auto
-sdl::event_loop( SDL_Event &p_event ) -> SDL_AppResult
+main::event_loop( SDL_Event &p_event ) -> app_retval
 {
     auto funcs = m_event_funcs[p_event.type];
+    event_data data = {
+        .window = m_window,
+        .render = m_render,
+        .event  = &p_event
+    };
 
     for (const auto &func : funcs) {
-        SDL_AppResult res = func(m_window, m_render);
+        app_retval res = func(data);
 
-        if (res == SDL_APP_SUCCESS) return SDL_APP_SUCCESS;
-        if (res == SDL_APP_FAILURE) return SDL_APP_FAILURE;
+        if (res == RETURN_SKIP)    return RETURN_SKIP;
+        if (res == RETURN_FAILURE) return RETURN_FAILURE;
+        if (res == RETURN_SUCCESS) return RETURN_SUCCESS;
     }
 
-    return SDL_APP_CONTINUE;
+    return RETURN_CONTINUE;
 }

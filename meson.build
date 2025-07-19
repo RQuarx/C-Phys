@@ -21,6 +21,7 @@ endif
 
 sdl_files = files(
     'src/sdl/objects/box.cc',
+    'src/sdl/objects/button.cc',
     'src/sdl/obj.cc',
     'src/sdl/sdl.cc',
 )

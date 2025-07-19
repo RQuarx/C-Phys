@@ -1,54 +1,55 @@
 #pragma once
-#include <unordered_map>
-#include <functional>
-#include <memory>
 #include <string>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_init.h>
+#include "sdl/types.hh"
 #include "sdl/obj.hh"
 
 
-class sdl
+namespace sdl
 {
-public:
-    using event_func = std::function<SDL_AppResult(SDL_Window*, SDL_Renderer*)>;
-
-    explicit sdl( const std::string &p_window_title );
-    ~sdl( void );
-
-
-    void add_obj( const std::shared_ptr<sdl_obj> &p_obj );
-
-
-    template<typename T_Func, typename... T_Params>
-    void add_event( const uint32_t p_type,
-                    T_Func       &&p_func,
-                    T_Params     &&...p_params )
+    class main
     {
-        event_func func =
-        [p_func, p_params...](SDL_Window *p_w, SDL_Renderer *p_r){
-            return p_func(p_w, p_r, p_params...);
-        };
-
-        m_event_funcs[p_type].push_back(func);
-    }
+    public:
+        explicit main( const std::string &p_window_title );
+        ~main( void );
 
 
-    void add_event( const uint32_t p_type, event_func p_func );
+        void add_obj( object *p_obj );
 
 
-    void run( void );
+        template<typename T_Func, typename... T_Params>
+        void add_event( const uint32_t p_type,
+                        T_Func       &&p_func,
+                        T_Params     &&...p_params )
+        {
+            event_func func =
+            [p_func, p_params...](event_data &p_data){
+                return p_func(p_data, p_params...);
+            };
 
-private:
-    SDL_Window   *m_window;
-    SDL_Renderer *m_render;
+            m_event_funcs[p_type].push_back(func);
+        }
 
-    std::unordered_map<uint32_t, std::vector<event_func>> m_event_funcs;
-    std::vector<std::shared_ptr<sdl_obj>> m_objects;
 
-    void init( const std::string &p_window_title );
+        void add_event( const uint32_t p_type, event_func p_func );
 
-    auto get_error( void ) const -> std::string;
 
-    auto event_loop( SDL_Event &p_event ) -> SDL_AppResult;
-};
+        auto run( void ) -> int32_t;
+
+    private:
+        SDL_Window   *m_window;
+        SDL_Renderer *m_render;
+
+        std::vector<object *> m_objects;
+        events_container       m_event_funcs;
+
+        void init( const std::string &p_window_title );
+
+        [[nodiscard]]
+        auto get_error( void ) const -> std::string;
+
+        [[nodiscard]]
+        auto event_loop( SDL_Event &p_event ) -> app_retval;
+    };
+} /* namespace sdl */

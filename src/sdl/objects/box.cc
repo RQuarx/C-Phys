@@ -1,39 +1,42 @@
 #include <SDL3/SDL.h>
 #include "sdl/objects/box.hh"
-#include "logs.hh"
+#include "exceptions.hh"
+
+using sdl::box;
 
 
-sdl_box::sdl_box( const f_pair     &p_pos,
-                  const f_pair     &p_size,
-                  const SDL_FColor &p_color,
-                  bool              p_fill )
+box::box( const f_pair &p_pos,
+          const f_pair &p_size,
+          const color  &p_color,
+          bool          p_fill ) :
+    m_box({ .x = p_pos.first,
+            .y = p_pos.second,
+            .w = p_size.first,
+            .h = p_size.second }),
+    m_fill(p_fill)
+{ m_color = p_color; }
+
+
+box::~box( void )
+{}
+
+
+void
+box::draw( SDL_Renderer *p_render )
 {
-    m_color = p_color;
-
-    float x_start = p_pos.first;
-    float x_end   = p_pos.first + p_size.first;
-    float y_start = p_pos.second;
-    float y_end   = p_pos.second + p_size.second;
-
-    /* top and bottom */
-    for (float x = x_start; x < x_end; x++) {
-        m_points.emplace_back(x, y_start);
-        m_points.emplace_back(x, y_end);
+    SDL_SetRenderDrawColor(p_render, m_color.r, m_color.g,
+                                     m_color.b, m_color.a);
+    if (m_fill) {
+        if (!SDL_RenderFillRect(p_render, &m_box))
+            throw sdl_error("Failed to draw-fill a rectangle: {}",
+                             SDL_GetError());
+    } else {
+        if (!SDL_RenderRect(p_render, &m_box))
+            throw sdl_error("Failed to draw a rectangle: {}", SDL_GetError());
     }
-
-    /* left and right */
-    for (float y = y_start; y < y_end; y++) {
-        m_points.emplace_back(x_start, y);
-        m_points.emplace_back(x_end, y);
-    }
-
-    if (p_fill) {
-        for (float x = x_start + 1; x < x_end - 1; x++) {
-            for (float y = y_start + 1; y < y_end - 1; y++) {
-                m_points.emplace_back(x, y);
-            }
-        }
-    }
-
-    LOG_INF("Box has an area of {}px", m_points.size());
 }
+
+
+auto
+box::get_rect( void ) -> const SDL_FRect &
+{ return m_box; }
