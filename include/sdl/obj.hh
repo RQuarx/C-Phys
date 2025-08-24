@@ -3,25 +3,23 @@
 #include <SDL3/SDL_render.h>
 #include "sdl/types.hh"
 
-using f_pair = std::pair<float, float>;
-
 
 namespace sdl
 {
-    class object
+    class Object
     {
     public:
-        object( void ) = default;
-        object( const f_pair &p_pos, const color &p_color );
+        Object( void ) = default;
+        Object( const f_pair &p_pos, const Color &p_color );
 
-        virtual ~object( void );
+        virtual ~Object( void ) = 0;
 
 
-        virtual void draw( SDL_Renderer *p_render );
-        virtual void get_events( events_container &p_events );
+        virtual void draw( SDL_Renderer *p_render ) = 0;
+        virtual void get_events( events_container &p_events ) = 0;
 
     protected:
-        color m_color;
+        Color m_color;
 
     private:
         std::vector<SDL_FPoint> m_points;

@@ -6,18 +6,18 @@
 
 namespace sdl
 {
-    class box : public object
+    class Box : public Object
     {
     public:
-        box( void ) = default;
+        Box( void ) = default;
 
-        box( const f_pair &p_pos,
+        Box( const f_pair &p_pos,
              const f_pair &p_size,
-             const color  &p_color,
+             const Color  &p_color,
              bool          p_fill );
 
 
-        ~box( void );
+        ~Box( void ) override;
 
 
         void draw( SDL_Renderer *p_render ) override;

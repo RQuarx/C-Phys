@@ -8,14 +8,14 @@
 
 namespace sdl
 {
-    class main
+    class Main
     {
     public:
-        explicit main( const std::string &p_window_title );
-        ~main( void );
+        explicit Main( const std::string &p_window_title );
+        ~Main( void );
 
 
-        void add_obj( object *p_obj );
+        void add_obj( Object *p_obj );
 
 
         template<typename T_Func, typename... T_Params>
@@ -24,7 +24,7 @@ namespace sdl
                         T_Params     &&...p_params )
         {
             event_func func =
-            [p_func, p_params...](event_data &p_data){
+            [p_func, p_params...](EventData &p_data){
                 return p_func(p_data, p_params...);
             };
 
@@ -41,7 +41,7 @@ namespace sdl
         SDL_Window   *m_window;
         SDL_Renderer *m_render;
 
-        std::vector<object *> m_objects;
+        std::vector<Object *> m_objects;
         events_container       m_event_funcs;
 
         void init( const std::string &p_window_title );
@@ -50,6 +50,6 @@ namespace sdl
         auto get_error( void ) const -> std::string;
 
         [[nodiscard]]
-        auto event_loop( SDL_Event &p_event ) -> app_retval;
+        auto event_loop( SDL_Event &p_event ) -> AppReturn;
     };
 } /* namespace sdl */

@@ -2,10 +2,12 @@
 #include <functional>
 #include <SDL3/SDL_render.h>
 
+using f_pair = std::pair<float, float>;
+
 
 namespace sdl
 {
-    enum app_retval
+    enum AppReturn
     {
         RETURN_CONTINUE,
         RETURN_SKIP,
@@ -14,7 +16,7 @@ namespace sdl
     };
 
 
-    struct event_data
+    struct EventData
     {
         SDL_Window   *window;
         SDL_Renderer *render;
@@ -23,38 +25,38 @@ namespace sdl
     };
 
 
-    using event_func = std::function<app_retval (event_data &)>;
+    using event_func = std::function<AppReturn (EventData &)>;
     using events_container =
         std::unordered_map<uint32_t, std::vector<event_func>>;
 
 
-    struct color
+    struct Color
     {
-        float r = 0;
-        float g = 0;
-        float b = 0;
-        float a = 0;
+        uint8_t r = 0;
+        uint8_t g = 0;
+        uint8_t b = 0;
+        uint8_t a = 0;
 
-        color( const float &p_all ) :
+        Color( const uint8_t &p_all ) :
             r(p_all), g(p_all), b(p_all), a(p_all)
         {}
 
-        color( const SDL_FColor &p_color ) :
+        Color( const SDL_FColor &p_color ) :
             r(p_color.r), g(p_color.g), b(p_color.b), a(p_color.a)
         {}
 
-        color( float p_r, float p_g, float p_b, float p_a ) :
+        Color( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) :
             r(p_r), g(p_g), b(p_b), a(p_a)
         {}
 
-        color( float p_r, float p_g, float p_b ) :
+        Color( uint8_t p_r, uint8_t p_g, uint8_t p_b ) :
             r(p_r), g(p_g), b(p_b), a(1)
         {}
 
-        color( void ) = default;
+        Color( void ) = default;
 
         auto
-        operator==( const color &p_color ) const noexcept -> bool
+        operator==( const Color &p_color ) const noexcept -> bool
         {
             if (p_color.r != r) return false;
             if (p_color.g != g) return false;
@@ -64,3 +66,30 @@ namespace sdl
         }
     };
 }  /* namespace sdl */
+
+
+constexpr inline auto
+operator""_rgb( unsigned long long val ) -> sdl::Color
+{
+    return sdl::Color {
+        static_cast<uint8_t>((val >> 16) & 0xFF),
+        static_cast<uint8_t>((val >> 8) & 0xFF),
+        static_cast<uint8_t>(val & 0xFF)
+    };
+}
+
+
+constexpr inline auto
+operator""_rgba( unsigned long long val ) -> sdl::Color
+{
+    return sdl::Color {
+        static_cast<uint8_t>((val >> 24) & 0xFF),
+        static_cast<uint8_t>((val >> 16) & 0xFF),
+        static_cast<uint8_t>((val >> 8) & 0xFF),
+        static_cast<uint8_t>(val & 0xFF)
+    };
+}
+
+
+#define COL_TO_SDL( p_color ) \
+    p_color.r, p_color.g, p_color.b, p_color.a

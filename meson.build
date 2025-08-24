@@ -3,10 +3,11 @@ project('C+Phys', 'cpp',
         version: '1.0.0-alpha')
 
 sdl = dependency('sdl3')
+sdl_ttf = dependency('sdl3-ttf')
 json = dependency('jsoncpp')
 
 add_project_dependencies([
-    sdl, json
+    sdl, sdl_ttf, json
 ], language: 'cpp')
 
 add_project_arguments([
@@ -22,8 +23,10 @@ endif
 sdl_files = files(
     'src/sdl/objects/box.cc',
     'src/sdl/objects/button.cc',
+    # 'src/sdl/objects/label.cc',
     'src/sdl/obj.cc',
     'src/sdl/sdl.cc',
+    'src/sdl/utils.cc',
 )
 
 source_files = files(

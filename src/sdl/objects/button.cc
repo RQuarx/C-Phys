@@ -1,16 +1,17 @@
+#include <SDL3/SDL_timer.h>
 #include "sdl/objects/button.hh"
-#include "exceptions.hh"
+#include "sdl/exception.hh"
 #include "logs.hh"
+#include "sdl/utils.hh"
 
-using sdl::button;
+using sdl::Button;
 
 
-button::button( const f_pair &p_pos,
+Button::Button( const f_pair &p_pos,
                 const f_pair &p_size,
-                const color  &p_color,
-                const color  &p_on_hover,
-                const color  &p_on_clicked ) :
-    // m_change_color(false),
+                const Color  &p_color,
+                const Color  &p_on_hover,
+                const Color  &p_on_clicked ) :
     m_hover_color(p_on_hover),
     m_clicked_color(p_on_clicked),
     m_original_color(p_color)
@@ -20,26 +21,27 @@ button::button( const f_pair &p_pos,
               .y = p_pos.second,
               .w = p_size.first,
               .h = p_size.second };
+    LOG_DBG("Created a Button instance");
 }
 
 
-button::~button( void )
+Button::~Button( void )
 {}
 
 
 void
-button::draw( SDL_Renderer *p_render )
+Button::draw( SDL_Renderer *p_render )
 {
     SDL_SetRenderDrawColor(p_render, m_color.r, m_color.g,
                                      m_color.b, m_color.a);
     if (!SDL_RenderFillRect(p_render, &m_box))
-        throw sdl_error("Failed to draw-fill a rectangle: {}",
-                         SDL_GetError());
+        throw sdl::Exception("Failed to draw-fill a rectangle: {}",
+                              SDL_GetError());
 }
 
 
 auto
-button::is_in_bound( const f_pair &p_current_pos ) -> bool
+Button::is_in_bound( const f_pair &p_current_pos ) -> bool
 {
     const std::array<float, 4> bound = {{
         m_box.x,           /* Min horizontal */
@@ -57,13 +59,14 @@ button::is_in_bound( const f_pair &p_current_pos ) -> bool
 
 
 auto
-button::cursor_event( event_data &p_data ) -> app_retval
+Button::cursor_event( sdl::EventData &p_data ) -> AppReturn
 {
     const f_pair current_pos = { p_data.event->motion.x,
                                  p_data.event->motion.y };
     if (!is_in_bound(current_pos)) {
         if (m_color != m_original_color)
             m_color = m_original_color;
+        set_cursor(SDL_GetDefaultCursor());
         return RETURN_CONTINUE;
     }
 
@@ -74,25 +77,27 @@ button::cursor_event( event_data &p_data ) -> app_retval
         m_color = m_clicked_color;
     } else m_color = m_hover_color;
 
+    set_cursor(SDL_SYSTEM_CURSOR_POINTER);
+
     return RETURN_CONTINUE;
 }
 
 
 void
-button::get_events( events_container &p_events )
+Button::get_events( events_container &p_events )
 {
     p_events[SDL_EVENT_MOUSE_MOTION].emplace_back(
-    [this]( event_data &p_data ) -> app_retval {
+    [this]( EventData &p_data ) -> AppReturn {
         return cursor_event(p_data);
     });
 
     p_events[SDL_EVENT_MOUSE_BUTTON_DOWN].emplace_back(
-    [this]( event_data &p_data ) -> app_retval {
+    [this]( EventData &p_data ) -> AppReturn {
         return cursor_event(p_data);
     });
 
     p_events[SDL_EVENT_MOUSE_BUTTON_UP].emplace_back(
-    [this]( event_data &p_data ) -> app_retval {
+    [this]( EventData &p_data ) -> AppReturn {
         return cursor_event(p_data);
     });
 }
